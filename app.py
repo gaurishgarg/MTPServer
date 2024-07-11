@@ -53,7 +53,7 @@ def uploadATMStats():
     try:
         received_Stats = request.get_json()
         received_Stats = dict(received_Stats)        
-        sendAtranstats(received_Stats)
+        sendATMstats(received_Stats)
         return 'File uploaded successfully', 201
     except Exception as e:
         return f"An error occurred: {str(e)}", 500
