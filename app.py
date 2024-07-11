@@ -1,7 +1,7 @@
 from io import BytesIO
 from flask import Flask, request
 from trackedpose import insert_into_trackedpose_collection
-from atm import insert_into_card_collection, sendATMstats,sendAtranstats
+from atm import insert_into_card_collection, sendATMstats,sendAtranstats, ratinglevel
 app = Flask(__name__) #app is an /object of Flask, Note that it is the name of the python file also
 #app is the name of our application
 #the variable __name__ <dunder-name-dunder>, name is a variable python assigns to modules/python files
@@ -64,8 +64,8 @@ def uploadATMStats():
 def uploadATMRating():
     try:
         rating = request.get_json()
-        rating = dict(rating)        
-        print(rating)
+        rating = dict(rating)  
+        ratinglevel(rating)      
         return 'Rating uploaded successfully', 201
     except Exception as e:
         return f"An error occurred: {str(e)}", 500

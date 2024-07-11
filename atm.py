@@ -4,9 +4,12 @@ current_DB = returndatabase()
 cardPosCollection = current_DB["CardPosCollection"]
 atmStats = current_DB["ATMStats"]
 transStats = current_DB["TransStats"]
+atmXPrating = current_DB["Confidence"]
 def insert_into_card_collection(record):
     cardPosCollection.insert_one(record)
 def sendATMstats(record):
     atmStats.insert_one(record)
 def sendAtranstats(record):
     transStats.insert_one(record)
+def ratinglevel(record):
+    atmXPrating.insert_one(record)
