@@ -15,11 +15,16 @@ def find_queuedfromdb():
 def receiveresultsfromquest(session_id,results):
     results_collection.update_one(
         {"sessionId": session_id},
-        {"$set": {"results": results, "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}},
+        {"$set": {"results": results, "status": "completed", "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}},
         upsert=True
     )
-    # Delete the processed command
-    commands_collection.delete_one({"sessionId": session_id})
+    # Update the command status to "completed" in the commands_collection
+    commands_collection.update_one(
+        {"sessionId": session_id, "status": "queued"},  # Ensure we're updating the "queued" status
+        {"$set": {"status": "completed"}}  # Mark the command as "completed"
+    )
+# Delete the processed command
+    
 def fetch_my_Results(session_id):
     return results_collection.find_one({"sessionId": session_id})
 def endauthcommand(session_id):
