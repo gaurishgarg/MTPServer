@@ -89,7 +89,7 @@ def receive_command():
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
     if(command == "END"):
-        endauthcommand()
+        endauthcommand(session_id)
     insertcommand2db(command_data)
     return jsonify({"status": "queued", "sessionId": session_id, "command": command}), 200
 
