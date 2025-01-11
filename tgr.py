@@ -26,7 +26,19 @@ def receiveresultsfromquest(session_id,results):
 # Delete the processed command
     
 def fetch_my_Results(session_id):
-    return results_collection.find_one({"sessionId": session_id})
+    result_doc = results_collection.find_one({"sessionId": session_id})
+
+    # If result is found, format it to match the ResultsResponse structure
+    if result_doc:
+        results_response = {
+            "status": result_doc.get("status", ""),
+            "sessionId": result_doc.get("sessionId", ""),
+            "results": result_doc.get("results", {}),  # Assuming results are stored as an object
+            "timestamp": result_doc.get("timestamp", "")
+        }
+        return results_response
+    else:
+        return {"error": "Results not found"}
 def endauthcommand(session_id):
      # Find the corresponding "AUTH" command with the same sessionId and "queued" status
         auth_command = commands_collection.find_one({"sessionId": session_id, "command": "AUTH", "status": "queued"})
