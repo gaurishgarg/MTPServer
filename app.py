@@ -2,7 +2,8 @@ from io import BytesIO
 from flask import Flask, request, jsonify
 from trackedpose import insert_into_trackedpose_collection
 from atm import insert_into_card_collection, sendATMstats,sendAtranstats, ratinglevel
-from tgr import insertcommand2db, updatecommand2db, find_queuedfromdb, updateresults, fetch_resultsfromdb, deleteindb
+from tgr import insertcommand2db, find_queuedfromdb, receiveresultsfromquest, fetch_my_Results
+from datetime import datetime
 app = Flask(__name__) #app is an /object of Flask, Note that it is the name of the python file also
 #app is the name of our application
 #the variable __name__ <dunder-name-dunder>, name is a variable python assigns to modules/python files
@@ -73,72 +74,59 @@ def uploadATMRating():
 
 @app.route('/command', methods=['POST'])
 def receive_command():
-    data = request.json
+    data = request.get_json()
     command = data.get("command")
     session_id = data.get("sessionId")
 
     if not command or not session_id:
         return jsonify({"error": "Command or sessionId missing"}), 400
 
-    # Store command in MongoDB
-    insertcommand2db(session_id,command)
+    # Store the command in MongoDB with 'queued' status
+    command_data = {
+        "sessionId": session_id,
+        "command": command,
+        "status": "queued",
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+    insertcommand2db(command_data)    
     return jsonify({"status": "queued", "sessionId": session_id, "command": command}), 200
 
 @app.route('/forward', methods=['GET'])
 def forward_command():
     command_doc = find_queuedfromdb()
-    #command_doc = commands_collection.find_one({"status": "queued"})
+    
     if not command_doc:
         return jsonify({"status": "queue empty"}), 200
 
-    session_id = command_doc["sessionId"]
-    command = command_doc["command"]
-
-    quest_url = "http://<quest-ip>/handle_command"
-    try:
-        response = request.post(quest_url, json={"command": command, "sessionId": session_id})
-        updatecommand2db(session_id)
-        #commands_collection.update_one({"sessionId": session_id}, {"$set": {"status": "processed"}})
-        return jsonify(response.json()), response.status_code
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    # Return the command to Quest
+    return jsonify({
+        "sessionId": command_doc["sessionId"],
+        "command": command_doc["command"]
+    }), 200
 
 @app.route('/results', methods=['POST'])
 def receive_results():
-    data = request.json
+    data = request.get_json()
     session_id = data.get("sessionId")
     results = data.get("results")
 
     if not session_id or not results:
         return jsonify({"error": "Missing sessionId or results"}), 400
-
-    # Update MongoDB with results
-    updateresults(session_id, results)    
-    return jsonify({"status": "received"}), 200
-
+    receiveresultsfromquest(session_id,results)
+    # Store the results in MongoDB
+    return jsonify({"status": "results received"}), 200
+# Endpoint for Mobile App to fetch results
 @app.route('/results', methods=['GET'])
 def fetch_results():
     session_id = request.args.get("sessionId")
     if not session_id:
         return jsonify({"error": "Missing sessionId"}), 400
 
-    
-    result = fetch_resultsfromdb(session_id)
+    result = fetch_my_Results(session_id)
     if result and "results" in result:
         return jsonify(result["results"]), 200
     return jsonify({"error": "Results not ready"}), 404
-
-@app.route('/results', methods=['DELETE'])
-def delete_results():
-    session_id = request.args.get("sessionId")
-    if not session_id:
-        return jsonify({"error": "Missing sessionId"}), 400
-
-    result = deleteindb(session_id)
-    if result.deleted_count > 0:
-        return jsonify({"status": "deleted"}), 200
-    return jsonify({"error": "Session not found"}), 404
-
 
 
 if __name__ == "__main__":

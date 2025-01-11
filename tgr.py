@@ -1,24 +1,24 @@
 from connectmongo import returnclient,returndatabase
+from datetime import datetime
 current_Client = returnclient()
 current_DB = returndatabase()
 commands_collection = current_DB["commands_collection"]
-def insertcommand2db(session_id, command):
-    commands_collection.insert_one({
-        "sessionId": session_id,
-        "command": command,
-        "status": "queued"
-    })
+results_collection = current_DB["results"]
+def insertcommand2db(command_data):
+   commands_collection.insert_one(command_data)
 def updatecommand2db(session_id):
     commands_collection.update_one({"sessionId": session_id}, {"$set": {"status": "processed"}})
 
 def find_queuedfromdb():
     command_doc = commands_collection.find_one({"status": "queued"})
     return command_doc
-def updateresults(session_id, results):
-    commands_collection.update_one({"sessionId": session_id}, {"$set": {"results": results, "status": "completed"}})
-
-def fetch_resultsfromdb(session_id):
-    result = commands_collection.find_one({"sessionId": session_id})
-    return result
-def deleteindb(session_id):
-    result = commands_collection.delete_one({"sessionId": session_id})
+def receiveresultsfromquest(session_id,results):
+    results_collection.update_one(
+        {"sessionId": session_id},
+        {"$set": {"results": results, "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}},
+        upsert=True
+    )
+    # Delete the processed command
+    commands_collection.delete_one({"sessionId": session_id})
+def fetch_my_Results(session_id):
+    return results_collection.find_one({"sessionId": session_id})
