@@ -22,3 +22,13 @@ def receiveresultsfromquest(session_id,results):
     commands_collection.delete_one({"sessionId": session_id})
 def fetch_my_Results(session_id):
     return results_collection.find_one({"sessionId": session_id})
+def endauthcommand(session_id):
+     # Find the corresponding "AUTH" command with the same sessionId and "queued" status
+        auth_command = commands_collection.find_one({"sessionId": session_id, "command": "AUTH", "status": "queued"})
+        
+        if auth_command:
+            # Update the "AUTH" command status to "completed"
+            commands_collection.update_one(
+                {"_id": auth_command["_id"]},
+                {"$set": {"status": "completed"}}
+            )

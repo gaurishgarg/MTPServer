@@ -2,7 +2,7 @@ from io import BytesIO
 from flask import Flask, request, jsonify
 from trackedpose import insert_into_trackedpose_collection
 from atm import insert_into_card_collection, sendATMstats,sendAtranstats, ratinglevel
-from tgr import insertcommand2db, find_queuedfromdb, receiveresultsfromquest, fetch_my_Results
+from tgr import insertcommand2db, find_queuedfromdb, receiveresultsfromquest, fetch_my_Results, endauthcommand
 from datetime import datetime
 app = Flask(__name__) #app is an /object of Flask, Note that it is the name of the python file also
 #app is the name of our application
@@ -88,8 +88,9 @@ def receive_command():
         "status": "queued",
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
-
-    insertcommand2db(command_data)    
+    if(command == "END"):
+        endauthcommand()
+    insertcommand2db(command_data)
     return jsonify({"status": "queued", "sessionId": session_id, "command": command}), 200
 
 @app.route('/forward', methods=['GET'])
