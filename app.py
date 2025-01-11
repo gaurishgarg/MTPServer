@@ -98,7 +98,7 @@ def forward_command():
     command_doc = find_queuedfromdb()
     
     if not command_doc:
-        return jsonify({"status": "queue empty"}), 200
+        return jsonify({"status": "queue empty"}), 404
 
     # Return the command to Quest
     return jsonify({
