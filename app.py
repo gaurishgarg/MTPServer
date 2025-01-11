@@ -126,7 +126,7 @@ def fetch_results():
 
     result = fetch_my_Results(session_id)
     if result and "results" in result:
-        return jsonify(result["results"]), 200
+        return jsonify(result), 200
     return jsonify({"error": "Results not ready"}), 404
 
 
