@@ -49,3 +49,5 @@ def endauthcommand(session_id):
                 {"_id": auth_command["_id"]},
                 {"$set": {"status": "completed"}}
             )
+def deletequeuedrecords():
+    commands_collection.delete_many({})

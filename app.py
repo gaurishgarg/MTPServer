@@ -2,7 +2,7 @@ from io import BytesIO
 from flask import Flask, request, jsonify
 from trackedpose import insert_into_trackedpose_collection
 from atm import insert_into_card_collection, sendATMstats,sendAtranstats, ratinglevel
-from tgr import insertcommand2db, find_queuedfromdb, receiveresultsfromquest, fetch_my_Results, endauthcommand
+from tgr import insertcommand2db, find_queuedfromdb, receiveresultsfromquest, fetch_my_Results, endauthcommand, deletequeuedrecords
 from datetime import datetime
 app = Flask(__name__) #app is an /object of Flask, Note that it is the name of the python file also
 #app is the name of our application
@@ -80,6 +80,13 @@ def receive_command():
 
     if not command or not session_id:
         return jsonify({"error": "Command or sessionId missing"}), 400
+    if command == "AUTH":
+        try:
+            # Delete all documents in the 'command' collection
+            deletequeuedrecords()
+            print("All previous commands have been deleted.")
+        except Exception as e:
+            return jsonify({"error": f"Failed to clear command collection: {str(e)}"}), 500
 
     # Store the command in MongoDB with 'queued' status
     command_data = {
